@@ -1,0 +1,36 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: order-service
+    url: http://order-service:3001
+    routes:
+      - name: health
+        paths: ["/health"]
+        strip_path: false
+      - name: orders
+        paths: ["/orders"]
+        strip_path: false
+      - name: payments
+        paths: ["/payments"]
+        strip_path: false
+
+  - name: inventory-service
+    url: http://inventory-service:3002
+    routes:
+      - name: inventory
+        paths: ["/inventory"]
+        strip_path: false
+
+  - name: billing-function
+    url: http://billing-function:3003
+    routes:
+      - name: billing
+        paths: ["/billing"]
+        strip_path: false
+
+plugins:
+  - name: rate-limiting
+    config:
+      minute: 120
+      policy: local

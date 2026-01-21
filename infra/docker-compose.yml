@@ -1,0 +1,121 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: orderhub-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
+    networks: [orderhub-net]
+
+  orders-db:
+    image: postgres:16
+    container_name: orderhub-orders-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: orders
+    volumes:
+      - orders_db_data:/var/lib/postgresql/data
+      - ./sql/orders:/docker-entrypoint-initdb.d:ro
+    networks: [orderhub-net]
+
+  inventory-db:
+    image: postgres:16
+    container_name: orderhub-inventory-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: inventory
+    volumes:
+      - inventory_db_data:/var/lib/postgresql/data
+      - ./sql/inventory:/docker-entrypoint-initdb.d:ro
+    networks: [orderhub-net]
+
+  billing-db:
+    image: postgres:16
+    container_name: orderhub-billing-db
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: billing
+    volumes:
+      - billing_db_data:/var/lib/postgresql/data
+      - ./sql/billing:/docker-entrypoint-initdb.d:ro
+    networks: [orderhub-net]
+
+  redis:
+    image: redis:7
+    container_name: orderhub-redis
+    ports:
+      - "6379:6379"
+    networks: [orderhub-net]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: orderhub-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    networks: [orderhub-net]
+
+  minio:
+    image: minio/minio:latest
+    container_name: orderhub-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks: [orderhub-net]
+
+  minio-mc:
+    image: minio/mc:latest
+    container_name: orderhub-minio-mc
+    depends_on:
+      - minio
+    entrypoint: ["/bin/sh","-lc"]
+    command: >
+      "mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
+       mc mb --ignore-existing local/${MINIO_BUCKET} &&
+       mc anonymous set download local/${MINIO_BUCKET} || true"
+    networks: [orderhub-net]
+
+  kong:
+    image: kong:3.7
+    container_name: orderhub-kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+    volumes:
+      - ./kong/kong.yml:/kong/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    networks: [orderhub-net]
+
+networks:
+  orderhub-net:
+
+volumes:
+  orders_db_data:
+  inventory_db_data:
+  billing_db_data:
+  minio_data:

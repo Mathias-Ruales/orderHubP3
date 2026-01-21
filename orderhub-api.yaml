@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: OrderHub Platform API
+  description: API Gateway centralizado para la plataforma OrderHub
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local API Gateway (Kong)
+
+paths:
+  /health:
+    get:
+      summary: Health check del sistema
+      responses:
+        '200':
+          description: Servicio operativo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  service:
+                    type: string
+
+  /inventory/products:
+    post:
+      summary: Crear producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProduct'
+      responses:
+        '200':
+          description: Producto creado
+    get:
+      summary: Listar productos
+      responses:
+        '200':
+          description: Lista de productos
+
+  /orders:
+    post:
+      summary: Crear orden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrder'
+      responses:
+        '200':
+          description: Orden creada
+
+  /orders/{id}:
+    get:
+      summary: Obtener orden por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Orden encontrada
+
+  /payments/webhook:
+    post:
+      summary: Webhook de confirmación de pago
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentWebhook'
+      responses:
+        '200':
+          description: Pago procesado
+
+  /billing/generate/{orderId}:
+    post:
+      summary: Generar factura
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Factura generada
+
+  /billing/invoices/{orderId}:
+    get:
+      summary: Obtener factura por orden
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Factura encontrada
+
+components:
+  schemas:
+    CreateProduct:
+      type: object
+      required: [sku, name, price_cents, initial_qty]
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        price_cents:
+          type: integer
+        initial_qty:
+          type: integer
+
+    CreateOrder:
+      type: object
+      required: [customer_email, currency, items]
+      properties:
+        customer_email:
+          type: string
+        currency:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            required: [product_id, quantity]
+            properties:
+              product_id:
+                type: integer
+              quantity:
+                type: integer
+
+    PaymentWebhook:
+      type: object
+      required: [orderId, paymentStatus, signature]
+      properties:
+        orderId:
+          type: string
+        paymentStatus:
+          type: string
+        signature:
+          type: string
