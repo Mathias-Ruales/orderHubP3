@@ -54,10 +54,10 @@ jobs:
 
       - name: Build Docker images (services)
         run: |
-          docker build -t orderhub/order-service:ci infra/services/order-service
-          docker build -t orderhub/inventory-service:ci infra/services/inventory-service
-          docker build -t orderhub/notification-service:ci infra/services/notification-service
-          docker build -t orderhub/billing-function:ci infra/services/billing-function
+          docker build -t orderhub/order-service:ci services/order-service
+          docker build -t orderhub/inventory-service:ci services/inventory-service
+          docker build -t orderhub/notification-service:ci services/notification-service
+          docker build -t orderhub/billing-function:ci functions/billing-function
 
   compose_smoke:
     runs-on: ubuntu-latest
