@@ -21,28 +21,28 @@ jobs:
 
       # ---------- Lint/Test (si existen scripts) ----------
       - name: Install & test order-service
-        working-directory: infra/services/order-service
+        working-directory: services/order-service
         run: |
           npm ci
           npm run lint --if-present
           npm test --if-present
 
       - name: Install & test inventory-service
-        working-directory: infra/services/inventory-service
+        working-directory: services/inventory-service
         run: |
           npm ci
           npm run lint --if-present
           npm test --if-present
 
       - name: Install & test notification-service
-        working-directory: infra/services/notification-service
+        working-directory: services/notification-service
         run: |
           npm ci
           npm run lint --if-present
           npm test --if-present
 
       - name: Install & test billing-function
-        working-directory: infra/services/billing-function
+        working-directory: functions/billing-function
         run: |
           npm ci
           npm run lint --if-present
